@@ -55,26 +55,44 @@ public class Othello extends Application { // {{{
                 final int f_column = column;
 
                 othelloPane.getBox(row, column).setOnMouseClicked(event -> {
-                    if (othelloPane.hasGameEnded()) {
-                        String winner = "";
-                        boolean haveTied = false;
+                    if (currentOwner.getType() == OwnerType.NONE && othelloPane.isValidPosition(f_row, f_column, currentTurn)) {
 
-                        if (whiteOwnerPoints < blackOwnerPoints) {
-                            winner = OwnerType.BLACK.toString();
-                        } else if (whiteOwnerPoints > blackOwnerPoints) {
-                            winner = OwnerType.WHITE.toString();
-                        } else {
-                            haveTied = true;
-                        }
-
-                        ownerTurnLabel.setText(haveTied ? "Tie" : winner + " Wins");
-                        return;
-                    } else if (currentOwner.getType() == OwnerType.NONE && othelloPane.isValidPosition(f_row, f_column, currentTurn)) {
                         currentOwner.setType(currentTurn);
                         othelloPane.updateBoardForFlips(f_row, f_column);
+
+                        blackOwnerPoints = 0;
+                        whiteOwnerPoints = 0;
+
+                        for (int i = 0; i < BOARD_SIZE; i++) {
+                            for (int j = 0; j < BOARD_SIZE; j++) {
+                                Owner t_owner = othelloPane.getOwner(i, j);
+                                if (t_owner.getType() == OwnerType.BLACK) {
+                                    blackOwnerPoints++;
+                                } else if (t_owner.getType() == OwnerType.WHITE) {
+                                    whiteOwnerPoints++;
+                                }
+                            }
+                        }
+
                         nextTurn();
-                        //othelloPane.highlightValidPositions(currentTurn);
-                        updateOwnerTurnTitle();
+
+                        if (othelloPane.hasGameEnded()) {
+                            String winner = "";
+                            boolean haveTied = false;
+
+                            if (whiteOwnerPoints < blackOwnerPoints) {
+                                winner = OwnerType.BLACK.toString();
+                            } else if (whiteOwnerPoints > blackOwnerPoints) {
+                                winner = OwnerType.WHITE.toString();
+                            } else {
+                                haveTied = true;
+                            }
+
+                            ownerTurnLabel.setText(haveTied ? "Tie" : winner + " Wins");
+                        } else {
+                            //othelloPane.highlightValidPositions(currentTurn);
+                            updateOwnerTurnTitle();
+                        }
                     }
                 });
             }
@@ -151,24 +169,16 @@ class OthelloPane extends GridPane { //{{{
     }
 
     public boolean hasGameEnded() {
-        OwnerType previousNonEmptyOwnerType = null;
         boolean containsBlankBox = false;
-        boolean containsMoreThanOneTypeOfOwner = false;
 
         for (Owner[] row: owners) {
             for (Owner owner: row) {
-                if (owner.getType() != previousNonEmptyOwnerType)
-                    containsMoreThanOneTypeOfOwner = true;
-
                 if (owner.getType() == OwnerType.NONE)
                     containsBlankBox = true;
-                else
-                    previousNonEmptyOwnerType = owner.getType();
             }
         }
 
-        return !containsBlankBox || !containsMoreThanOneTypeOfOwner;
-
+        return !containsBlankBox;
     }
 
     // flip related
