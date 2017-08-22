@@ -17,7 +17,7 @@ public class Othello extends Application {
     static final String BOARD_GAME_NAME = "Othello";
     static final int BOARD_SIZE = 10;
     static final int BOX_SIZE = 40;
-    static final int FADE_DURATION = 200;
+    static final int FLIP_DURATION = 200;
 
     static int blackOwnerPoints = 0;
     static int whiteOwnerPoints = 0;
@@ -35,7 +35,7 @@ public class Othello extends Application {
         root = new FlowPane(Orientation.VERTICAL);
         root.setAlignment(Pos.CENTER);
         ownerTurnLabel = new TitleLabel(0,true);
-        othelloPane = new OthelloPane(BOARD_SIZE, BOX_SIZE, FADE_DURATION);
+        othelloPane = new OthelloPane(BOARD_SIZE, BOX_SIZE, FLIP_DURATION);
 
         root.getChildren().addAll(ownerTurnLabel, othelloPane);
 
@@ -104,20 +104,20 @@ public class Othello extends Application {
 class OthelloPane extends GridPane { //{{{
     private String backgroundInHex = "#654321";
     private int boardSize;
-    private Duration fadeDuration;
+    private Duration flipDuration;
     private int[][] directions = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
 
     private Owner[][] owners;
     private Pane[][] boxes;
 
-    public OthelloPane(int boardSize, int boxSize, double fadeDuration) {
+    public OthelloPane(int boardSize, int boxSize, double flipDuration) {
         super();
 
         owners = new Owner[boardSize][boardSize];
         boxes = new Pane[boardSize][boardSize];
 
         this.boardSize = boardSize;
-        this.fadeDuration = Duration.millis(fadeDuration);
+        this.flipDuration = Duration.millis(flipDuration);
 
         // setup grid constaints
         for (int i = 0; i < boardSize; i++)
@@ -221,14 +221,14 @@ class OthelloPane extends GridPane { //{{{
 
             Owner owner = getOwner(row, column);
 
-            RotateTransition firstRotator = new RotateTransition(Duration.millis(800), owner);
+            RotateTransition firstRotator = new RotateTransition(flipDuration, owner);
             firstRotator.setAxis(Rotate.Y_AXIS);
             firstRotator.setFromAngle(0);
             firstRotator.setToAngle(90);
             firstRotator.setInterpolator(Interpolator.LINEAR);
             firstRotator.setOnFinished(e -> owner.setType(originalOwnerType));
 
-            RotateTransition secondRotator = new RotateTransition(Duration.millis(800), owner);
+            RotateTransition secondRotator = new RotateTransition(flipDuration, owner);
             secondRotator.setAxis(Rotate.Y_AXIS);
             secondRotator.setFromAngle(90);
             secondRotator.setToAngle(180);
