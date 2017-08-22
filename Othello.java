@@ -17,7 +17,7 @@ public class Othello extends Application {
     static final String BOARD_GAME_NAME = "Othello";
     static final int BOARD_SIZE = 10;
     static final int BOX_SIZE = 40;
-    static final int FLIP_DURATION = 200;
+    static final int FLIP_DURATION = 800;
 
     static int blackOwnerPoints = 0;
     static int whiteOwnerPoints = 0;
