@@ -248,7 +248,7 @@ class OthelloPane extends GridPane { //{{{
         int column = originalColumn + columnDirection;
 
         int count = 0;
-        while (row < boardSize && row >= 0 && column < boardSize && row >= 0) {
+        while (row < boardSize && row >= 0 && column < boardSize && column >= 0) {
             Owner owner = getOwner(row, column);
             OwnerType ownerType = owner.getType();
 
