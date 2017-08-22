@@ -1,3 +1,4 @@
+// imports {{{
 import javafx.animation.*;
 import javafx.scene.transform.Rotate;
 import javafx.application.Application;
@@ -12,8 +13,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
-public class Othello extends Application {
+//}}}
+public class Othello extends Application { // {{{
     static final String BOARD_GAME_NAME = "Othello";
     static final int BOARD_SIZE = 10;
     static final int BOX_SIZE = 40;
@@ -34,13 +35,14 @@ public class Othello extends Application {
     public void start(Stage stage) {
         root = new FlowPane(Orientation.VERTICAL);
         root.setAlignment(Pos.CENTER);
-        ownerTurnLabel = new TitleLabel(0,true);
+        ownerTurnLabel = new TitleLabel(0, true);
         othelloPane = new OthelloPane(BOARD_SIZE, BOX_SIZE, FLIP_DURATION);
 
         root.getChildren().addAll(ownerTurnLabel, othelloPane);
 
         updateOwnerTurnTitle();
         setupClickListeners();
+        //othelloPane.highlightValidPositions(currentTurn);
         presentStage(stage);
     }
 
@@ -71,22 +73,15 @@ public class Othello extends Application {
                         currentOwner.setType(currentTurn);
                         othelloPane.updateBoardForFlips(f_row, f_column);
                         nextTurn();
+                        //othelloPane.highlightValidPositions(currentTurn);
                         updateOwnerTurnTitle();
-                        //othelloPane.highlightPositions(f_row, f_column, currentTurn);
                     }
-
                 });
             }
         }
-
-
     } //}}}
     public void nextTurn() { //{{{
-        if (currentTurn == OwnerType.BLACK) {
-            currentTurn = OwnerType.WHITE;
-        } else {
-            currentTurn = OwnerType.BLACK;
-        }
+        currentTurn = (currentTurn == OwnerType.BLACK) ? OwnerType.WHITE : OwnerType.BLACK;
     } //}}}
     public void updateOwnerTurnTitle() { // {{{
         ownerTurnLabel.setText(currentTurn + " Player's Turn");
@@ -100,10 +95,11 @@ public class Othello extends Application {
     public static void main(String[] args) { // {{{
         launch(args);
     } //}}}
-}
+} //}}}
 class OthelloPane extends GridPane { //{{{
     private String backgroundInHex = "#654321";
     private int boardSize;
+    private int boxSize;
     private Duration flipDuration;
     private int[][] directions = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
 
@@ -117,6 +113,7 @@ class OthelloPane extends GridPane { //{{{
         boxes = new Pane[boardSize][boardSize];
 
         this.boardSize = boardSize;
+        this.boxSize = boxSize;
         this.flipDuration = Duration.millis(flipDuration);
 
         // setup grid constaints
@@ -195,12 +192,16 @@ class OthelloPane extends GridPane { //{{{
 
     public boolean isValidPosition(int row, int column, OwnerType type) {
         boolean valid = false;
+        Owner owner = getOwner(row, column);
         for (int[] directionGroup: directions) {
-            int rowDirection = directionGroup[0];
-            int columnDirection = directionGroup[1];
-            valid = valid || isFlipableDirection(row, column, rowDirection, columnDirection, type);
-            if (valid) break;
+
+                int rowDirection = directionGroup[0];
+                int columnDirection = directionGroup[1];
+                if (owner.getType() == OwnerType.NONE && isFlipableDirection(row, column, rowDirection, columnDirection, type)) {
+                    return true;
+                }
         }
+
         return valid;
     }
 
@@ -241,7 +242,32 @@ class OthelloPane extends GridPane { //{{{
         }
     }
 
+    public void highlightValidPositions(OwnerType type) {
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                Owner owner = getOwner(i, j);
+
+                owner.setType(owner.getType());
+                owner.setRadius(boxSize/2 -5);
+                owner.setOpacity(1);
+
+                for (int[] directionGroup: directions) {
+                    int rowDirection = directionGroup[0];
+                    int columnDirection = directionGroup[1];
+
+                    if (owner.getType() == OwnerType.NONE && isFlipableDirection(i, j, rowDirection, columnDirection, type)) {
+                        owner.setFill(Color.YELLOW);
+                        owner.setRadius(boxSize/2 -10);
+                        owner.setOpacity(0.2);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     public boolean isFlipableDirection(int originalRow, int originalColumn, int rowDirection, int columnDirection, OwnerType optionalOwnerType) {
+        // hacky way to do an optional parameter
         OwnerType originalOwnerType = (optionalOwnerType == null) ? getOwner(originalRow, originalColumn).getType() : optionalOwnerType;
 
         int row = originalRow + rowDirection;
@@ -252,8 +278,8 @@ class OthelloPane extends GridPane { //{{{
             Owner owner = getOwner(row, column);
             OwnerType ownerType = owner.getType();
 
-            if (ownerType == OwnerType.NONE) {
-                return false;
+            if (ownerType == OwnerType.NONE || owner.getFill() == Color.YELLOW) {
+                break;
             } else if (ownerType == originalOwnerType) {
                 return count > 0;
             }
