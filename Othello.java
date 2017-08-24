@@ -13,6 +13,10 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.event.Event;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.MouseButton;
+import java.lang.Thread;
 //}}}
 public class Othello extends Application { // {{{
     static final String BOARD_GAME_NAME = "Othello";
@@ -44,6 +48,7 @@ public class Othello extends Application { // {{{
         setupClickListeners();
         //othelloPane.highlightValidPositions(currentTurn);
         presentStage(stage);
+
     }
 
     public void setupClickListeners() { // {{{
@@ -92,7 +97,31 @@ public class Othello extends Application { // {{{
                         } else {
                             //othelloPane.highlightValidPositions(currentTurn);
                             updateOwnerTurnTitle();
+                            if (currentTurn == OwnerType.WHITE) {
+
+                                Timeline timeLine = new Timeline(new KeyFrame(Duration.millis(FLIP_DURATION), ev -> {
+                                    int positionRow = 0;
+                                    int positionCol = 0;
+                                    int count = 0;
+                                    for (int i = 0; i < BOARD_SIZE; i++) {
+                                        for (int j = 0; j < BOARD_SIZE; j++) {
+                                            if (othelloPane.isValidPosition(i, j, OwnerType.WHITE)) {
+                                                int tempCount = othelloPane.numFlips(i, j);
+                                                if (tempCount > count) {
+                                                    count = tempCount;
+                                                    positionRow = i;
+                                                    positionCol = j;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Robot.click(othelloPane.getBox(positionRow, positionCol));
+                                }));
+                                timeLine.play();
+                            }
                         }
+
                     }
                 });
             }
@@ -113,6 +142,11 @@ public class Othello extends Application { // {{{
     public static void main(String[] args) { // {{{
         launch(args);
     } //}}}
+} //}}}
+class Robot { // {{{
+    public static void click(Node node) {
+        Event.fireEvent(node, new MouseEvent(MouseEvent.MOUSE_CLICKED, node.getLayoutX()/2, node.getLayoutY()/2, node.getLayoutX()/2, node.getLayoutY()/2, MouseButton.PRIMARY, 1, true, true, true, true, true, true, true, true, true, true, null));
+    }
 } //}}}
 class OthelloPane extends GridPane { //{{{
     private String backgroundInHex = "#654321";
@@ -213,6 +247,41 @@ class OthelloPane extends GridPane { //{{{
         }
 
         return valid;
+    }
+
+    public int numFlips(int originalRow, int originalColumn) {
+        OwnerType originalOwnerType = getOwner(originalRow, originalColumn).getType();
+
+        int highCount = 0;
+
+        for (int[] directionGroup: directions) {
+            int rowDirection = directionGroup[0];
+            int columnDirection = directionGroup[1];
+
+            int count = 0;
+
+            int row = originalRow + rowDirection;
+            int column = originalColumn + columnDirection;
+
+            while (row < boardSize && row >= 0 && column < boardSize && column >= 0) {
+                OwnerType ownerType = getOwner(row, column).getType();
+
+                if (ownerType == OwnerType.NONE || ownerType == originalOwnerType) {
+                    break;
+                }
+
+                count++;
+
+                row += rowDirection;
+                column += columnDirection;
+            }
+
+            if (count > highCount) {
+                highCount = count;
+            }
+        }
+
+        return highCount;
     }
 
     public void flipInDirection(OwnerType[][] ownerTypes, int originalRow, int originalColumn, int rowDirection, int columnDirection) {
